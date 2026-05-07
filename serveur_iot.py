@@ -1,56 +1,73 @@
 from flask import Flask
-import serial
 import threading
 import time
 
-arduino = serial.Serial('/dev/ttyACM0', 9600)
-time.sleep(2)
+#Bool qui permet d'exécuter sans avoir l'Arduino de branché
+arduino_present = False
 
-temperature_salon = "..."
-humidity_salon = "..."
+if arduino_present:
+    import serial
+    arduino = serial.Serial('/dev/ttyACM0', 9600)
+    time.sleep(2)
 
-temperature_chambre = "..."
-humidity_chambre = "..."
+    temperature_salon = "..."
+    humidity_salon = "..."
 
-sound_level = "..."
-garage_distance = "..."
+    temperature_chambre = "..."
+    humidity_chambre = "..."
 
-app = Flask(__name__)
+    sound_level = "..."
+    garage_distance = "..."
 
-def read_serial():
-    global temperature_salon, humidity_salon
-    global temperature_chambre, humidity_chambre
-    global sound_level, garage_distance
+    def read_serial():
+        global temperature_salon, humidity_salon
+        global temperature_chambre, humidity_chambre
+        global sound_level, garage_distance
 
-    while True:
-        try:
-            data = arduino.readline().decode().strip()
-            parts = data.split(";")
+        while True:
+            try:
+                data = arduino.readline().decode().strip()
+                parts = data.split(";")
 
-            for p in parts:
-                if p.startswith("S:"):
-                    vals = p[2:].split(",")
-                    temperature_salon = vals[0]
-                    humidity_salon = vals[1]
+                for p in parts:
+                    if p.startswith("S:"):
+                        vals = p[2:].split(",")
+                        temperature_salon = vals[0]
+                        humidity_salon = vals[1]
 
-                elif p.startswith("C:"):
-                    vals = p[2:].split(",")
-                    temperature_chambre = vals[0]
-                    humidity_chambre = vals[1]
+                    elif p.startswith("C:"):
+                        vals = p[2:].split(",")
+                        temperature_chambre = vals[0]
+                        humidity_chambre = vals[1]
 
-                elif p.startswith("N:"):
-                    sound_level = p[2:]
+                    elif p.startswith("N:"):
+                        sound_level = p[2:]
 
-                elif p.startswith("G:"):
-                    garage_distance = p[2:]
+                    elif p.startswith("G:"):
+                        garage_distance = p[2:]
 
-        except:
-            pass
+            except:
+                pass
 
 
-thread = threading.Thread(target=read_serial)
-thread.daemon = True
-thread.start()
+    thread = threading.Thread(target=read_serial)
+    thread.daemon = True
+    thread.start()
+else:
+    arduino = None
+
+    temperature_salon = "22"
+    humidity_salon = "45"
+
+    temperature_chambre = "20"
+    humidity_chambre = "50"
+
+    sound_level = "15"
+    garage_distance = "30"
+
+    app = Flask(__name__)
+
+
 
 @app.route("/")
 def home():
