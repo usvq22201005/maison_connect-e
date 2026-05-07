@@ -133,74 +133,81 @@ def home():
 
 # ROUTES
 
+#Fonction qui prend en entrée ce que l'on souhaite envoyer en série à l'arduino, affiche dans la console si l'arduino n'est pas branché
+def send_command(commande):
+    if arduino_present:
+        arduino.write(commande)
+    else:
+        print("Commande envoyée : ", commande)
+
 @app.route("/salon_on")
 def salon_on():
-    arduino.write(b'S')
+    send_command(b'S')
     return "OK"
 
 @app.route("/salon_off")
 def salon_off():
-    arduino.write(b's')
+    send_command(b's')
     return "OK"
 
 @app.route("/led_on")
 def led_on():
-    arduino.write(b'L')
+    send_command(b'L')
     return "OK"
 
 @app.route("/led_off")
 def led_off():
-    arduino.write(b'l')
+    send_command(b'l')
     return "OK"
 
 @app.route("/heat_on")
 def heat_on():
-    arduino.write(b'H')
+    send_command(b'H')
     return "OK"
 
 @app.route("/heat_off")
 def heat_off():
-    arduino.write(b'h')
+    send_command(b'h')
     return "OK"
 
 @app.route("/relay_on")
 def relay_on():
-    arduino.write(b'R')
+    send_command(b'R')
     return "OK"
 
 @app.route("/relay_off")
 def relay_off():
-    arduino.write(b'r')
+    send_command(b'r')
     return "OK"
 
 @app.route("/led2_on")
 def led2_on():
-    arduino.write(b'K')
+    send_command(b'K')
     return "OK"
 
 @app.route("/led2_off")
 def led2_off():
-    arduino.write(b'k')
+    send_command(b'k')
     return "OK"
 
 @app.route("/heat2_on")
 def heat2_on():
-    arduino.write(b'J')
+    send_command(b'J')
     return "OK"
 
 @app.route("/heat2_off")
 def heat2_off():
-    arduino.write(b'j')
+    send_command(b'j')
     return "OK"
 
 @app.route("/arm")
 def arm():
-    arduino.write(b'A')
+    send_command(b'A')
     return "OK"
 
 @app.route("/disarm")
 def disarm():
-    arduino.write(b'a')
+    send_command(b'a')
     return "OK"
 
 app.run(host='0.0.0.0', port=5000)
