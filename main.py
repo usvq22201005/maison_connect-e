@@ -1,0 +1,1 @@
+#A faire : lancer serveur_flask.py qui fait tourner le Flask, et le raspberry.py qui gère l'échange avec le Raspberry Pi et l'arduino

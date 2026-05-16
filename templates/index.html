@@ -1,0 +1,110 @@
+<html>
+
+<body style="font-family:Arial">
+
+    <h1>🏠 Smart Home</h1>
+
+    <h2>🛋 Salon</h2>
+    <p>Temp: <span id="temp_salon">{{ data.Salon.Capteurs.DHT11.temperature }}</span>°C</p>
+    <p>Hum: <span id="hum_salon">{{ data.Salon.Capteurs.DHT11.humidite }}</span>%</p>
+
+    <a href="/salon_on"><button>💡 ON</button></a>
+    <a href="/salon_off"><button>OFF</button></a>
+
+    <a href="/arm"><button>🚨 ARMER</button></a>
+    <a href="/disarm"><button>DESARMER</button></a>
+
+    <hr>
+
+    <h2>🛏 Chambre 1</h2>
+    <p>Temp: <span id="temp_chambre1">{{ data.Chambre_1.Capteurs.DHT22.temperature }}</span>°C</p>
+    <p>Hum: <span id="hum_chambre1">{{ data.Chambre_1.Capteurs.DHT22.humidite }}</span>%</p>
+
+    <a href="/led_on"><button>💡 ON</button></a>
+    <a href="/led_off"><button>OFF</button></a>
+
+    <a href="/heat_on"><button>🔥 ON</button></a>
+    <a href="/heat_off"><button>OFF</button></a>
+
+    <a href="/relay_on"><button>⚡ Relais ON</button></a>
+    <a href="/relay_off"><button>OFF</button></a>
+
+    <hr>
+
+    <h2>🛏 Chambre 2</h2>
+    <p>🎤 Niveau sonore : <span id="son_chambre2">{{ data.Chambre_2.Capteurs.NiveauSonore.niveau }}</span></p>
+
+    <a href="/led2_on"><button>💡 ON</button></a>
+    <a href="/led2_off"><button>OFF</button></a>
+
+    <a href="/heat2_on"><button>🔥 ON</button></a>
+    <a href="/heat2_off"><button>OFF</button></a>
+
+    <hr>
+
+    <h2>🚗 Garage</h2>
+    <p>Distance : <span id="garage_distance">{{ data.Garage.Capteurs.Ultrason.distance }}</span> cm</p>
+    <p>Garage : <span id="garage_etat">{{ "occupé" if data.Garage.Actionneurs.LedStationnement.etat else "libre" }}</span></p>
+
+</body>
+<script>
+
+    async function refreshData() {
+
+        try {
+
+            const response = await fetch("/api/data")
+
+            const data = await response.json()
+
+            // ===== SALON =====
+
+            document.getElementById("temp_salon").innerText =
+                data.Salon.Capteurs.DHT11.temperature
+
+            document.getElementById("hum_salon").innerText =
+                data.Salon.Capteurs.DHT11.humidite
+
+            // ===== CHAMBRE 1 =====
+
+            document.getElementById("temp_chambre1").innerText =
+                data.Chambre_1.Capteurs.DHT22.temperature
+
+            document.getElementById("hum_chambre1").innerText =
+                data.Chambre_1.Capteurs.DHT22.humidite
+
+            // ===== CHAMBRE 2 =====
+
+            document.getElementById("son_chambre2").innerText =
+                data.Chambre_2.Capteurs.NiveauSonore.niveau
+
+            // ===== GARAGE =====
+
+            document.getElementById("garage_distance").innerText =
+                data.Garage.Capteurs.Ultrason.distance
+
+            const distance = data.Garage.Capteurs.Ultrason.distance
+            const seuil = data.Garage.Actionneurs.LedStationnement.distance_activation
+
+            if (distance <= seuil && distance >= 0) {
+                document.getElementById("garage_etat").innerText = "occupé"
+            } else {
+                document.getElementById("garage_etat").innerText = "libre"
+            }
+
+        }
+
+        catch (error) {
+
+            console.log(error)
+
+        }
+
+    }
+
+    //Mise à jour touts les secondes
+    setInterval(refreshData, 1000)
+
+</script>
+
+</html>
