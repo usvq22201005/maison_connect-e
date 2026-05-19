@@ -2,24 +2,26 @@
 <html>
 <head>
     <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="auth-body">
 
-<h1>Connexion</h1>
+<div class="auth-card">
 
-<form method="POST">
+    <div class="auth-title">🔐 Connexion</div>
 
-    <input type="email" name="email" placeholder="Email" required>
-    <br><br>
+    <form method="POST">
 
-    <input type="password" name="password" placeholder="Mot de passe" required>
-    <br><br>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Mot de passe" required>
 
-    <button type="submit">Connexion</button>
+        <button type="submit">Se connecter</button>
 
-</form>
+    </form>
 
-<a href="/register">Créer un compte</a>
+    <a href="/register">Créer un compte</a>
+
+</div>
 
 </body>
 </html>

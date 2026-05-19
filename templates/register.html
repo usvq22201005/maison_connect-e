@@ -2,24 +2,26 @@
 <html>
 <head>
     <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="auth-body">
 
-<h1>Inscription</h1>
+<div class="auth-card">
 
-<form method="POST">
+    <div class="auth-title">🧾 Inscription</div>
 
-    <input type="email" name="email" placeholder="Email" required>
-    <br><br>
+    <form method="POST">
 
-    <input type="password" name="password" placeholder="Mot de passe" required>
-    <br><br>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Mot de passe" required>
 
-    <button type="submit">Créer le compte</button>
+        <button type="submit">Créer le compte</button>
 
-</form>
+    </form>
 
-<a href="/login">Connexion</a>
+    <a href="/login">Connexion</a>
+
+</div>
 
 </body>
 </html>

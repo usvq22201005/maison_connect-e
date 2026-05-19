@@ -1,0 +1,185 @@
+/* =======================
+   GLOBAL
+======================= */
+
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b1220;
+    color: #e5e7eb;
+}
+
+/* =======================
+   HEADER DASHBOARD
+======================= */
+
+.header {
+    text-align: center;
+    padding: 20px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* =======================
+   GRID DASHBOARD
+======================= */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+
+/* =======================
+   CARD DASHBOARD
+======================= */
+
+.card {
+    background: #111827;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    transition: 0.2s;
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #60a5fa;
+}
+
+/* =======================
+   TEXT VALUES
+======================= */
+
+.value {
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+/* STATUS */
+.ok { color: #22c55e; font-weight: bold; }
+.bad { color: #ef4444; font-weight: bold; }
+
+/* =======================
+   SWITCH
+======================= */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input { opacity: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  background-color: #374151;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 20px;
+  transition: .3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .3s;
+}
+
+input:checked + .slider {
+    background-color: #22c55e;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* =======================
+   AUTH (LOGIN / REGISTER)
+======================= */
+
+.auth-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: radial-gradient(circle at top, #111827, #0b1220);
+}
+
+.auth-card {
+    background: #111827;
+    padding: 30px;
+    border-radius: 16px;
+    width: 320px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    text-align: center;
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #60a5fa;
+    margin-bottom: 20px;
+}
+
+/* INPUTS */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    background: #0b1220;
+    color: white;
+    outline: none;
+}
+
+input:focus {
+    border-color: #60a5fa;
+}
+
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background: #60a5fa;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #3b82f6;
+    transform: scale(1.02);
+}
+
+/* LINKS */
+a {
+    display: block;
+    margin-top: 15px;
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+a:hover {
+    color: white;
+}
