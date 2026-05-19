@@ -1,3 +1,4 @@
 firebase.json
+firebase_auth.json
 .venv/
 __pycache__/

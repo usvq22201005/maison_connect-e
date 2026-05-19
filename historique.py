@@ -113,6 +113,6 @@ while True:
 
 
 
-    print("Historique mis à jour")
+    #print("Historique mis à jour")
 
     time.sleep(60)

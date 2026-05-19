@@ -1,8 +1,10 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request, redirect, session
 import time
-from firebase_control import get_data, update_data
+from firebase_control import *
 
 app = Flask(__name__)
+
+app.secret_key = get_firebase_config()["secret_key"]
 
 @app.route("/api/data")
 def api_data():
@@ -24,6 +26,9 @@ def api_data():
 @app.route("/")
 def home():
 
+    if "user" not in session:
+        return redirect("/login")
+    
     data = get_data("SmartHome")
     return render_template("index.html", data=data)
 
@@ -141,6 +146,49 @@ def history(room, sensor, metric):
     ]
 
     return jsonify(result)
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = login_user(email, password)
+
+        if user:
+            session["user"] = email
+            return redirect("/")
+
+        return "Erreur connexion"
+
+    return render_template("login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = register_user(email, password)
+
+        if user:
+            return redirect("/login")
+
+        return "Erreur inscription"
+
+    return render_template("register.html")
+
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+    return redirect("/login")
 
 app.run(host='0.0.0.0', port=5000)
 #http://127.0.0.1:5000/
