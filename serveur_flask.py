@@ -120,5 +120,27 @@ def disarm():
     update_data("SmartHome/Salon/Actionneurs/Alarme", {"etat": False})
     return "OK"
 
+
+#Historique
+@app.route("/api/history/<room>/<sensor>/<metric>")
+def history(room, sensor, metric):
+
+    path = f"SmartHome/{room}/Capteurs/{sensor}/Historique/{metric}"
+    data = get_data(path)
+
+    if not data:
+        return jsonify([])
+
+    result = [
+        {
+            "x": v.get("timestamp", 0),
+            "y": v.get("value", 0)
+        }
+        for v in data.values()
+        if isinstance(v, dict)
+    ]
+
+    return jsonify(result)
+
 app.run(host='0.0.0.0', port=5000)
 #http://127.0.0.1:5000/

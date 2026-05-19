@@ -1,110 +1,383 @@
+<!DOCTYPE html>
 <html>
+<head>
+<meta charset="utf-8">
 
-<body style="font-family:Arial">
+<style>
 
-    <h1>🏠 Smart Home</h1>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b1220;
+    color: #e5e7eb;
+}
 
-    <h2>🛋 Salon</h2>
-    <p>Temp: <span id="temp_salon">{{ data.Salon.Capteurs.DHT11.temperature }}</span>°C</p>
-    <p>Hum: <span id="hum_salon">{{ data.Salon.Capteurs.DHT11.humidite }}</span>%</p>
+/* HEADER */
+.header {
+    text-align: center;
+    padding: 20px;
+    font-size: 28px;
+    font-weight: bold;
+}
 
-    <a href="/salon_on"><button>💡 ON</button></a>
-    <a href="/salon_off"><button>OFF</button></a>
+/* GRID DASHBOARD */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
 
-    <a href="/arm"><button>🚨 ARMER</button></a>
-    <a href="/disarm"><button>DESARMER</button></a>
+/* CARD */
+.card {
+    background: #111827;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    transition: 0.2s;
+}
 
-    <hr>
+.card:hover {
+    transform: scale(1.02);
+}
 
-    <h2>🛏 Chambre 1</h2>
-    <p>Temp: <span id="temp_chambre1">{{ data.Chambre_1.Capteurs.DHT22.temperature }}</span>°C</p>
-    <p>Hum: <span id="hum_chambre1">{{ data.Chambre_1.Capteurs.DHT22.humidite }}</span>%</p>
+.title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #60a5fa;
+}
 
-    <a href="/led_on"><button>💡 ON</button></a>
-    <a href="/led_off"><button>OFF</button></a>
+/* VALUES */
+.value {
+    font-size: 14px;
+    margin: 4px 0;
+}
 
-    <a href="/heat_on"><button>🔥 ON</button></a>
-    <a href="/heat_off"><button>OFF</button></a>
+/* STATUS COLORS */
+.ok {
+    color: #22c55e;
+    font-weight: bold;
+}
 
-    <a href="/relay_on"><button>⚡ Relais ON</button></a>
-    <a href="/relay_off"><button>OFF</button></a>
+.bad {
+    color: #ef4444;
+    font-weight: bold;
+}
 
-    <hr>
+/* SWITCH */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
 
-    <h2>🛏 Chambre 2</h2>
-    <p>🎤 Niveau sonore : <span id="son_chambre2">{{ data.Chambre_2.Capteurs.NiveauSonore.niveau }}</span></p>
+.switch input {
+  opacity: 0;
+}
 
-    <a href="/led2_on"><button>💡 ON</button></a>
-    <a href="/led2_off"><button>OFF</button></a>
+.slider {
+  position: absolute;
+  cursor: pointer;
+  background-color: #374151;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 20px;
+  transition: .3s;
+}
 
-    <a href="/heat2_on"><button>🔥 ON</button></a>
-    <a href="/heat2_off"><button>OFF</button></a>
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .3s;
+}
 
-    <hr>
+input:checked + .slider {
+  background-color: #22c55e;
+}
 
-    <h2>🚗 Garage</h2>
-    <p>Distance : <span id="garage_distance">{{ data.Garage.Capteurs.Ultrason.distance }}</span> cm</p>
-    <p>Garage : <span id="garage_etat">{{ "occupé" if data.Garage.Actionneurs.LedStationnement.etat else "libre" }}</span></p>
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
 
-</body>
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="header">🏠 Smart Home Dashboard</div>
+
+<div class="grid">
+
+<!-- SALON -->
+<div class="card">
+    <div class="title">🛋 Salon</div>
+
+    <div class="value">🌡 Temp: <span id="temp_salon">{{ data.Salon.Capteurs.DHT11.temperature }}</span>°C</div>
+    <div class="value">💧 Hum: <span id="hum_salon">{{ data.Salon.Capteurs.DHT11.humidite }}</span>%</div>
+
+    <div class="row">
+        <span>💡 Lumière</span>
+        <label class="switch">
+            <input id="toggle_salon" type="checkbox" onchange="toggleSalon(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <canvas id="chart_salon_temp"></canvas>
+    <canvas id="chart_salon_hum"></canvas>
+
+</div>
+
+<!-- CHAMBRE 1 -->
+<div class="card">
+    <div class="title">🛏 Chambre 1</div>
+
+    <div class="value">🌡 Temp: <span id="temp_chambre1">{{ data.Chambre_1.Capteurs.DHT22.temperature }}</span>°C</div>
+    <div class="value">💧 Hum: <span id="hum_chambre1">{{ data.Chambre_1.Capteurs.DHT22.humidite }}</span>%</div>
+
+    <div class="row">
+        <span>💡 LED</span>
+        <label class="switch">
+            <input id="toggle_led" type="checkbox" onchange="toggleLed(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="row">
+        <span>🔥 Chauffage</span>
+        <label class="switch">
+            <input id="toggle_heat" type="checkbox" onchange="toggleHeat(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="row">
+        <span>⚡ Ventilateur</span>
+        <label class="switch">
+            <input id="toggle_relay" type="checkbox" onchange="toggleRelay(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+
+    <canvas id="chart_ch1_temp"></canvas>
+    <canvas id="chart_ch1_hum"></canvas>
+
+</div>
+
+<!-- CHAMBRE 2 -->
+<div class="card">
+    <div class="title">🛏 Chambre 2</div>
+
+    <div class="value">🎤 Son: <span id="son_chambre2">{{ data.Chambre_2.Capteurs.NiveauSonore.niveau }}</span></div>
+
+    <div class="row">
+        <span>💡 LED</span>
+        <label class="switch">
+            <input id="toggle_led2" type="checkbox" onchange="toggleLed2(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="row">
+        <span>🔥 Chauffage</span>
+        <label class="switch">
+            <input id="toggle_heat2" type="checkbox" onchange="toggleHeat2(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <canvas id="chart_ch2_sound"></canvas>
+
+</div>
+
+<!-- GARAGE -->
+<div class="card">
+    <div class="title">🚗 Garage</div>
+
+    <div class="value">📏 Distance: <span id="garage_distance">{{ data.Garage.Capteurs.Ultrason.distance }}</span> cm</div>
+
+    <div class="value">
+        État:
+        <span id="garage_etat"
+        class="{% if data.Garage.Actionneurs.LedStationnement.etat %}bad{% else %}ok{% endif %}">
+            {{ "occupé" if data.Garage.Actionneurs.LedStationnement.etat else "libre" }}
+        </span>
+    </div>
+
+    <canvas id="chart_garage_dist"></canvas>
+
+</div>
+
+</div>
+
 <script>
 
-    async function refreshData() {
+// ===== TOGGLES =====
 
-        try {
+function toggleSalon(state) {
+    fetch(state ? "/salon_on" : "/salon_off")
+}
 
-            const response = await fetch("/api/data")
+function toggleLed(state) {
+    fetch(state ? "/led_on" : "/led_off")
+}
 
-            const data = await response.json()
+function toggleHeat(state) {
+    fetch(state ? "/heat_on" : "/heat_off")
+}
 
-            // ===== SALON =====
+function toggleRelay(state) {
+    fetch(state ? "/relay_on" : "/relay_off")
+}
 
-            document.getElementById("temp_salon").innerText =
-                data.Salon.Capteurs.DHT11.temperature
+function toggleLed2(state) {
+    fetch(state ? "/led2_on" : "/led2_off")
+}
 
-            document.getElementById("hum_salon").innerText =
-                data.Salon.Capteurs.DHT11.humidite
+function toggleHeat2(state) {
+    fetch(state ? "/heat2_on" : "/heat2_off")
+}
 
-            // ===== CHAMBRE 1 =====
 
-            document.getElementById("temp_chambre1").innerText =
-                data.Chambre_1.Capteurs.DHT22.temperature
+/* ================= CHARTS ================= */
 
-            document.getElementById("hum_chambre1").innerText =
-                data.Chambre_1.Capteurs.DHT22.humidite
+const charts = {};
 
-            // ===== CHAMBRE 2 =====
-
-            document.getElementById("son_chambre2").innerText =
-                data.Chambre_2.Capteurs.NiveauSonore.niveau
-
-            // ===== GARAGE =====
-
-            document.getElementById("garage_distance").innerText =
-                data.Garage.Capteurs.Ultrason.distance
-
-            const distance = data.Garage.Capteurs.Ultrason.distance
-            const seuil = data.Garage.Actionneurs.LedStationnement.distance_activation
-
-            if (distance <= seuil && distance >= 0) {
-                document.getElementById("garage_etat").innerText = "occupé"
-            } else {
-                document.getElementById("garage_etat").innerText = "libre"
-            }
-
+function createChart(id, label, color) {
+    return new Chart(document.getElementById(id), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: label,
+                data: [],
+                borderColor: color
+            }]
         }
+    });
+}
 
-        catch (error) {
+function initCharts() {
 
-            console.log(error)
+    charts.salon_temp = createChart("chart_salon_temp", "Temp Salon", "#60a5fa");
+    charts.salon_hum = createChart("chart_salon_hum", "Hum Salon", "#22c55e");
 
-        }
+    charts.ch1_temp = createChart("chart_ch1_temp", "Temp Chambre 1", "#60a5fa");
+    charts.ch1_hum = createChart("chart_ch1_hum", "Hum Chambre 1", "#22c55e");
 
+    charts.ch2_sound = createChart("chart_ch2_sound", "Son", "#f59e0b");
+
+    charts.garage_dist = createChart("chart_garage_dist", "Distance", "#a78bfa");
+}
+
+// ===== LIVE UPDATE =====
+
+
+async function refreshData() {
+
+    const res = await fetch("/api/data")
+    const data = await res.json()
+
+    // salon
+    document.getElementById("temp_salon").innerText = data.Salon.Capteurs.DHT11.temperature
+    document.getElementById("hum_salon").innerText = data.Salon.Capteurs.DHT11.humidite
+
+    // chambre 1
+    document.getElementById("temp_chambre1").innerText = data.Chambre_1.Capteurs.DHT22.temperature
+    document.getElementById("hum_chambre1").innerText = data.Chambre_1.Capteurs.DHT22.humidite
+
+    // chambre 2
+    document.getElementById("son_chambre2").innerText = data.Chambre_2.Capteurs.NiveauSonore.niveau
+
+    // garage
+    const d = data.Garage.Capteurs.Ultrason.distance
+    const s = data.Garage.Actionneurs.LedStationnement.distance_activation
+
+    document.getElementById("garage_distance").innerText = d
+
+    const etat = document.getElementById("garage_etat")
+
+    if (d <= s) {
+        etat.innerText = "occupé"
+        etat.className = "bad"
+    } else {
+        etat.innerText = "libre"
+        etat.className = "ok"
     }
 
-    //Mise à jour touts les secondes
-    setInterval(refreshData, 1000)
+    document.getElementById("toggle_salon").checked =
+        data.Salon.Actionneurs.Eclairage.etat
+
+    document.getElementById("toggle_led").checked =
+        data.Chambre_1.Actionneurs.Eclairage.etat
+
+    document.getElementById("toggle_heat").checked =
+        data.Chambre_1.Actionneurs.Chauffage.etat
+
+    document.getElementById("toggle_relay").checked =
+        data.Chambre_1.Actionneurs.Ventilateur.etat
+
+    document.getElementById("toggle_led2").checked =
+    data.Chambre_2.Actionneurs.Eclairage.etat
+
+    document.getElementById("toggle_heat2").checked =
+        data.Chambre_2.Actionneurs.Chauffage.etat
+}
+
+
+async function loadHistory(chartKey, room, sensor, metric) {
+
+    const res = await fetch(`/api/history/${room}/${sensor}/${metric}`);
+    const data = await res.json();
+
+    charts[chartKey].data.labels = data.map(p =>
+        new Date(p.x * 1000).toLocaleTimeString()
+    );
+
+    charts[chartKey].data.datasets[0].data = data.map(p => p.y);
+
+    charts[chartKey].update();
+}
+
+function loadAllHistory() {
+
+    loadHistory("salon_temp", "Salon", "DHT11", "temperature");
+    loadHistory("salon_hum", "Salon", "DHT11", "humidite");
+
+    loadHistory("ch1_temp", "Chambre_1", "DHT22", "temperature");
+    loadHistory("ch1_hum", "Chambre_1", "DHT22", "humidite");
+
+    loadHistory("ch2_sound", "Chambre_2", "NiveauSonore", "niveau");
+
+    loadHistory("garage_dist", "Garage", "Ultrason", "distance");
+}
+
+
+initCharts();
+
+setInterval(refreshData, 1000);
+setInterval(loadAllHistory, 60000);
+
+refreshData();
+loadAllHistory();
 
 </script>
 
+</body>
 </html>
