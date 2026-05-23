@@ -52,131 +52,133 @@ actionneurs = {
     }
 }
 
-while True:
 
-    try:
-
-        data = arduino.readline().decode().strip()
-
-        parts = data.split(";")
-
-        for p in parts:
-
-            #Salon
-            if p.startswith("S:"):
-
-                vals = p[2:].split(",")
-
-                update_data(
-                    "SmartHome/Salon/Capteurs/DHT11",
-                    {
-                        "temperature": float(vals[0]),
-                        "humidite": float(vals[1])
-                    }
-                )
-
-            #Chambre 1
-            elif p.startswith("C:"):
-
-                vals = p[2:].split(",")
-
-                update_data(
-                    "SmartHome/Chambre_1/Capteurs/DHT22",
-                    {
-                        "temperature": float(vals[0]),
-                        "humidite": float(vals[1])
-                    }
-                )
-
-            #Chambre 2
-            elif p.startswith("N:"):
-
-                update_data(
-                    "SmartHome/Chambre_2/Capteurs/NiveauSonore",
-                    {
-                        "niveau": int(p[2:])
-                    }
-                )
-
-            #Garage
-            elif p.startswith("G:"):
-
-                update_data(
-                    "SmartHome/Garage/Capteurs/Ultrason",
-                    {
-                        "distance": int(p[2:])
-                    }
-                )
-
-    except Exception as e:
-
-        print("Erreur lecture :", e)
-
-    #Firebase -> Arduino
-
-    for chemin_actionneur, commandes in actionneurs.items():
+def run_raspberry():
+    while True:
 
         try:
 
-            chemin_etat = chemin_actionneur + "/etat"
+            data = arduino.readline().decode().strip()
 
-            etat = get_data(chemin_etat)
+            parts = data.split(";")
 
-            # Si changement
-            if last_states.get(chemin_actionneur) != etat:
+            for p in parts:
 
-                if etat:
+                #Salon
+                if p.startswith("S:"):
 
-                    arduino.write(commandes["on"])
+                    vals = p[2:].split(",")
 
-                    print(
-                        f"{chemin_actionneur} -> ON"
+                    update_data(
+                        "SmartHome/Salon/Capteurs/DHT11",
+                        {
+                            "temperature": float(vals[0]),
+                            "humidite": float(vals[1])
+                        }
                     )
 
-                else:
+                #Chambre 1
+                elif p.startswith("C:"):
 
-                    arduino.write(commandes["off"])
+                    vals = p[2:].split(",")
 
-                    print(
-                        f"{chemin_actionneur} -> OFF"
+                    update_data(
+                        "SmartHome/Chambre_1/Capteurs/DHT22",
+                        {
+                            "temperature": float(vals[0]),
+                            "humidite": float(vals[1])
+                        }
                     )
 
-                # Sauvegarde dernier état
-                last_states[chemin_actionneur] = etat
+                #Chambre 2
+                elif p.startswith("N:"):
+
+                    update_data(
+                        "SmartHome/Chambre_2/Capteurs/NiveauSonore",
+                        {
+                            "niveau": int(p[2:])
+                        }
+                    )
+
+                #Garage
+                elif p.startswith("G:"):
+
+                    update_data(
+                        "SmartHome/Garage/Capteurs/Ultrason",
+                        {
+                            "distance": int(p[2:])
+                        }
+                    )
 
         except Exception as e:
 
-            print(
-                f"Erreur actionneur {chemin_actionneur} :",
-                e
+            print("Erreur lecture :", e)
+
+        #Firebase -> Arduino
+
+        for chemin_actionneur, commandes in actionneurs.items():
+
+            try:
+
+                chemin_etat = chemin_actionneur + "/etat"
+
+                etat = get_data(chemin_etat)
+
+                # Si changement
+                if last_states.get(chemin_actionneur) != etat:
+
+                    if etat:
+
+                        arduino.write(commandes["on"])
+
+                        print(
+                            f"{chemin_actionneur} -> ON"
+                        )
+
+                    else:
+
+                        arduino.write(commandes["off"])
+
+                        print(
+                            f"{chemin_actionneur} -> OFF"
+                        )
+
+                    # Sauvegarde dernier état
+                    last_states[chemin_actionneur] = etat
+
+            except Exception as e:
+
+                print(
+                    f"Erreur actionneur {chemin_actionneur} :",
+                    e
+                )
+
+        #Seuils
+
+        distance = get_data(
+            "SmartHome/Garage/Capteurs/Ultrason/distance"
+        )
+
+        distance_activation = get_data(
+            "SmartHome/Garage/Actionneurs/LedStationnement/distance_activation"
+        )
+
+        if distance <= distance_activation:
+
+            update_data(
+                "SmartHome/Garage/Actionneurs/LedStationnement",
+                {
+                    "etat": True
+                }
             )
 
-    #Seuils
+        else:
 
-    distance = get_data(
-        "SmartHome/Garage/Capteurs/Ultrason/distance"
-    )
+            update_data(
+                "SmartHome/Garage/Actionneurs/LedStationnement",
+                {
+                    "etat": False
+                }
+            )
 
-    distance_activation = get_data(
-        "SmartHome/Garage/Actionneurs/LedStationnement/distance_activation"
-    )
-
-    if distance <= distance_activation:
-
-        update_data(
-            "SmartHome/Garage/Actionneurs/LedStationnement",
-            {
-                "etat": True
-            }
-        )
-
-    else:
-
-        update_data(
-            "SmartHome/Garage/Actionneurs/LedStationnement",
-            {
-                "etat": False
-            }
-        )
-
-    time.sleep(0.2)
+        time.sleep(0.2)
