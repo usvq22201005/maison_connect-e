@@ -80,8 +80,8 @@ void loop()
     if (cmd == 'H') digitalWrite(ledHeat, HIGH);
     if (cmd == 'h') digitalWrite(ledHeat, LOW);
 
-    if (cmd == 'R') digitalWrite(relayPin, LOW);
-    if (cmd == 'r') digitalWrite(relayPin, HIGH);
+    if (cmd == 'R') digitalWrite(relayPin, HIGH);
+    if (cmd == 'r') digitalWrite(relayPin, LOW);
 
     if (cmd == 'K') digitalWrite(ledChambre2, HIGH);
     if (cmd == 'k') digitalWrite(ledChambre2, LOW);
@@ -126,7 +126,7 @@ void loop()
   }
 
   // ===== DHT CHAMBRE =====
-  int chkC = DHT.read11(DHT_CHAMBRE);
+  int chkC = DHT.read22(DHT_CHAMBRE);
 
   if (chkC == DHTLIB_OK)
   {

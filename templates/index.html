@@ -36,6 +36,18 @@
         </label>
     </div>
 
+    <div class="row">
+        <span>🚨 Alarme</span>
+
+        <label class="switch">
+            <input id="toggle_alarm"
+                type="checkbox"
+                onchange="toggleAlarm(this.checked)">
+
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <canvas id="chart_salon_temp"></canvas>
     <canvas id="chart_salon_hum"></canvas>
 
@@ -128,28 +140,83 @@
 
 // ===== TOGGLES =====
 
+let updating = {
+    salon: false,
+    alarm: false,
+    led1: false,
+    heat1: false,
+    relay1: false,
+    led2: false,
+    heat2: false
+};
+
+async function sendToggle(url, key) {
+
+    updating[key] = true;
+
+    try {
+        await fetch(url);
+    }
+    catch(e) {
+        console.log(e);
+    }
+
+    // petit délai pour laisser Firebase se synchroniser
+    setTimeout(() => {
+        updating[key] = false;
+    }, 500);
+}
+
+
+// ===== TOGGLES =====
+
 function toggleSalon(state) {
-    fetch(state ? "/salon_on" : "/salon_off")
+    sendToggle(
+        state ? "/salon_on" : "/salon_off",
+        "salon"
+    );
+}
+
+function toggleAlarm(state) {
+    sendToggle(
+        state ? "/arm" : "/disarm",
+        "alarm"
+    );
 }
 
 function toggleLed(state) {
-    fetch(state ? "/led_on" : "/led_off")
+    sendToggle(
+        state ? "/led_on" : "/led_off",
+        "led1"
+    );
 }
 
 function toggleHeat(state) {
-    fetch(state ? "/heat_on" : "/heat_off")
+    sendToggle(
+        state ? "/heat_on" : "/heat_off",
+        "heat1"
+    );
 }
 
 function toggleRelay(state) {
-    fetch(state ? "/relay_on" : "/relay_off")
+    sendToggle(
+        state ? "/relay_on" : "/relay_off",
+        "relay1"
+    );
 }
 
 function toggleLed2(state) {
-    fetch(state ? "/led2_on" : "/led2_off")
+    sendToggle(
+        state ? "/led2_on" : "/led2_off",
+        "led2"
+    );
 }
 
 function toggleHeat2(state) {
-    fetch(state ? "/heat2_on" : "/heat2_off")
+    sendToggle(
+        state ? "/heat2_on" : "/heat2_off",
+        "heat2"
+    );
 }
 
 
@@ -219,23 +286,40 @@ async function refreshData() {
         etat.className = "ok"
     }
 
-    document.getElementById("toggle_salon").checked =
-        data.Salon.Actionneurs.Eclairage.etat
+    if (!updating.salon) {
+        document.getElementById("toggle_salon").checked =
+            data.Salon.Actionneurs.Eclairage.etat
+    }
 
-    document.getElementById("toggle_led").checked =
-        data.Chambre_1.Actionneurs.Eclairage.etat
+    if (!updating.alarm) {
+        document.getElementById("toggle_alarm").checked =
+            data.Salon.Actionneurs.Alarme.etat
+    }
 
-    document.getElementById("toggle_heat").checked =
-        data.Chambre_1.Actionneurs.Chauffage.etat
+    if (!updating.led1) {
+        document.getElementById("toggle_led").checked =
+            data.Chambre_1.Actionneurs.Eclairage.etat
+    }
 
-    document.getElementById("toggle_relay").checked =
-        data.Chambre_1.Actionneurs.Ventilateur.etat
+    if (!updating.heat1) {
+        document.getElementById("toggle_heat").checked =
+            data.Chambre_1.Actionneurs.Chauffage.etat
+    }
 
-    document.getElementById("toggle_led2").checked =
-    data.Chambre_2.Actionneurs.Eclairage.etat
+    if (!updating.relay1) {
+        document.getElementById("toggle_relay").checked =
+            data.Chambre_1.Actionneurs.Ventilateur.etat
+    }
 
-    document.getElementById("toggle_heat2").checked =
-        data.Chambre_2.Actionneurs.Chauffage.etat
+    if (!updating.led2) {
+        document.getElementById("toggle_led2").checked =
+            data.Chambre_2.Actionneurs.Eclairage.etat
+    }
+
+    if (!updating.heat2) {
+        document.getElementById("toggle_heat2").checked =
+            data.Chambre_2.Actionneurs.Chauffage.etat
+    }
 }
 
 
