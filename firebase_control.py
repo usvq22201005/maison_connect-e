@@ -95,4 +95,7 @@ firebase_config_data = firebase_config
 def get_firebase_config():
     return firebase_config
 
+def get_user_home(user_id):
+    return get_data(f"Users/{user_id}/id_maison")
+
 print("Done !")

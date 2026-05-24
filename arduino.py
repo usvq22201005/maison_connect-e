@@ -11,42 +11,42 @@ time.sleep(2)
 last_states = {}
 
 actionneurs = {
-    "SmartHome/Salon/Actionneurs/Eclairage": {
+    "Homes/SmartHome/Salon/Actionneurs/Eclairage": {
         "on": b'S',
         "off": b's'
     },
 
-    "SmartHome/Salon/Actionneurs/Alarme": {
+    "Homes/SmartHome/Salon/Actionneurs/Alarme": {
         "on": b'A',
         "off": b'a'
     },
 
-    "SmartHome/Chambre_1/Actionneurs/Eclairage": {
+    "Homes/SmartHome/Chambre_1/Actionneurs/Eclairage": {
         "on": b'L',
         "off": b'l'
     },
 
-    "SmartHome/Chambre_1/Actionneurs/Chauffage": {
+    "Homes/SmartHome/Chambre_1/Actionneurs/Chauffage": {
         "on": b'H',
         "off": b'h'
     },
 
-    "SmartHome/Chambre_1/Actionneurs/Ventilateur": {
+    "Homes/SmartHome/Chambre_1/Actionneurs/Ventilateur": {
         "on": b'R',
         "off": b'r'
     },
 
-    "SmartHome/Chambre_2/Actionneurs/Eclairage": {
+    "Homes/SmartHome/Chambre_2/Actionneurs/Eclairage": {
         "on": b'K',
         "off": b'k'
     },
 
-    "SmartHome/Chambre_2/Actionneurs/Chauffage": {
+    "Homes/SmartHome/Chambre_2/Actionneurs/Chauffage": {
         "on": b'J',
         "off": b'j'
     },
 
-    "SmartHome/Garage/Actionneurs/LedStationnement": {
+    "Homes/SmartHome/Garage/Actionneurs/LedStationnement": {
         "on": b'P',
         "off": b'p'
     }
@@ -70,7 +70,7 @@ def comm_arduino():
                     vals = p[2:].split(",")
 
                     update_data(
-                        "SmartHome/Salon/Capteurs/DHT11",
+                        "Homes/SmartHome/Salon/Capteurs/DHT11",
                         {
                             "temperature": float(vals[0]),
                             "humidite": float(vals[1])
@@ -83,7 +83,7 @@ def comm_arduino():
                     vals = p[2:].split(",")
 
                     update_data(
-                        "SmartHome/Chambre_1/Capteurs/DHT22",
+                        "Homes/SmartHome/Chambre_1/Capteurs/DHT22",
                         {
                             "temperature": float(vals[0]),
                             "humidite": float(vals[1])
@@ -94,7 +94,7 @@ def comm_arduino():
                 elif p.startswith("N:"):
 
                     update_data(
-                        "SmartHome/Chambre_2/Capteurs/NiveauSonore",
+                        "Homes/SmartHome/Chambre_2/Capteurs/NiveauSonore",
                         {
                             "niveau": int(p[2:])
                         }
@@ -104,7 +104,7 @@ def comm_arduino():
                 elif p.startswith("G:"):
 
                     update_data(
-                        "SmartHome/Garage/Capteurs/Ultrason",
+                        "Homes/SmartHome/Garage/Capteurs/Ultrason",
                         {
                             "distance": int(p[2:])
                         }
@@ -156,17 +156,17 @@ def comm_arduino():
         #Seuils
 
         distance = get_data(
-            "SmartHome/Garage/Capteurs/Ultrason/distance"
+            "Homes/SmartHome/Garage/Capteurs/Ultrason/distance"
         )
 
         distance_activation = get_data(
-            "SmartHome/Garage/Actionneurs/LedStationnement/distance_activation"
+            "Homes/SmartHome/Garage/Actionneurs/LedStationnement/distance_activation"
         )
 
         if distance <= distance_activation:
 
             update_data(
-                "SmartHome/Garage/Actionneurs/LedStationnement",
+                "Homes/SmartHome/Garage/Actionneurs/LedStationnement",
                 {
                     "etat": True
                 }
@@ -175,7 +175,7 @@ def comm_arduino():
         else:
 
             update_data(
-                "SmartHome/Garage/Actionneurs/LedStationnement",
+                "Homes/SmartHome/Garage/Actionneurs/LedStationnement",
                 {
                     "etat": False
                 }

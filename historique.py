@@ -3,8 +3,11 @@ from firebase_admin import db
 from firebase_control import get_data, push_history
 
 
-def cleanup_24h(path):
+# =========================
+# CLEANUP GLOBAL (24h)
+# =========================
 
+def cleanup_24h(path):
     ref = db.reference(path)
     data = ref.get()
 
@@ -14,107 +17,72 @@ def cleanup_24h(path):
     now = int(time.time())
 
     for key, val in list(data.items()):
-
         if isinstance(val, dict) and "timestamp" in val:
-
             if now - val["timestamp"] > 86400:
                 ref.child(key).delete()
 
 
+# =========================
+# PUSH HISTORY AUTO
+# =========================
+
+def process_sensor(home_id, room, sensor_name, sensor_data):
+
+    if not isinstance(sensor_data, dict):
+        return
+
+    historique_path = f"Homes/{home_id}/{room}/Capteurs/{sensor_name}/Historique"
+
+    for key, value in sensor_data.items():
+
+        # on ignore les sous-blocs type Historique
+        if key == "Historique":
+            continue
+
+        # valeur simple capteur
+        push_history(
+            f"{historique_path}/{key}",
+            value
+        )
+
+        cleanup_24h(f"{historique_path}/{key}")
+
+
+# =========================
+# MAIN LOOP
+# =========================
+
 def run_historique():
+
     while True:
 
-        data = get_data("SmartHome")
+        homes = get_data("Homes")
 
-        # =========================
-        # SALON
-        # =========================
+        if not homes:
+            time.sleep(5)
+            continue
 
-        salon_temp = data["Salon"]["Capteurs"]["DHT11"]["temperature"]
-        salon_hum = data["Salon"]["Capteurs"]["DHT11"]["humidite"]
+        for home_id, home_data in homes.items():
 
-        push_history(
-            "SmartHome/Salon/Capteurs/DHT11/Historique/temperature",
-            salon_temp
-        )
+            if not isinstance(home_data, dict):
+                continue
 
-        push_history(
-            "SmartHome/Salon/Capteurs/DHT11/Historique/humidite",
-            salon_hum
-        )
+            for room_name, room_data in home_data.items():
 
-        cleanup_24h(
-            "SmartHome/Salon/Capteurs/DHT11/Historique/temperature"
-        )
+                if "Capteurs" not in room_data:
+                    continue
 
-        cleanup_24h(
-            "SmartHome/Salon/Capteurs/DHT11/Historique/humidite"
-        )
+                capteurs = room_data["Capteurs"]
 
+                for sensor_name, sensor_data in capteurs.items():
 
+                    process_sensor(
+                        home_id,
+                        room_name,
+                        sensor_name,
+                        sensor_data
+                    )
 
-        # =========================
-        # CHAMBRE 1
-        # =========================
-
-        ch1_temp = data["Chambre_1"]["Capteurs"]["DHT22"]["temperature"]
-        ch1_hum = data["Chambre_1"]["Capteurs"]["DHT22"]["humidite"]
-
-        push_history(
-            "SmartHome/Chambre_1/Capteurs/DHT22/Historique/temperature",
-            ch1_temp
-        )
-
-        push_history(
-            "SmartHome/Chambre_1/Capteurs/DHT22/Historique/humidite",
-            ch1_hum
-        )
-
-        cleanup_24h(
-            "SmartHome/Chambre_1/Capteurs/DHT22/Historique/temperature"
-        )
-
-        cleanup_24h(
-            "SmartHome/Chambre_1/Capteurs/DHT22/Historique/humidite"
-        )
-
-
-
-        # =========================
-        # CHAMBRE 2
-        # =========================
-
-        ch2_sound = data["Chambre_2"]["Capteurs"]["NiveauSonore"]["niveau"]
-
-        push_history(
-            "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/niveau",
-            ch2_sound
-        )
-
-        cleanup_24h(
-            "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/niveau"
-        )
-
-
-
-        # =========================
-        # GARAGE
-        # =========================
-
-        garage_dist = data["Garage"]["Capteurs"]["Ultrason"]["distance"]
-
-        push_history(
-            "SmartHome/Garage/Capteurs/Ultrason/Historique/distance",
-            garage_dist
-        )
-
-        cleanup_24h(
-            "SmartHome/Garage/Capteurs/Ultrason/Historique/distance"
-        )
-
-
-
-        print("Historique mis à jour")
+        print("Historique mis à jour (auto multi-homes)")
 
         time.sleep(60)
-    

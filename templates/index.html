@@ -138,6 +138,71 @@
 
 <script>
 
+let homeStructure = {};
+
+async function loadStructure() {
+    const res = await fetch("/api/data");
+    homeStructure = await res.json();
+
+    renderUI();
+}
+
+function renderUI() {
+    const grid = document.querySelector(".grid");
+    grid.innerHTML = "";
+
+    for (const roomName in homeStructure) {
+
+        const room = homeStructure[roomName];
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        let html = `<div class="title">🏠 ${roomName}</div>`;
+
+        // capteurs
+        if (room.Capteurs) {
+            for (const capteur in room.Capteurs) {
+
+                const values = room.Capteurs[capteur];
+
+                for (const key in values) {
+                    if (key !== "Historique") {
+                        html += `<div class="value">${capteur} ${key}: ${values[key]}</div>`;
+                    }
+                }
+            }
+        }
+
+        // actionneurs
+        if (room.Actionneurs) {
+            for (const act in room.Actionneurs) {
+
+                const state = room.Actionneurs[act].etat;
+
+                html += `
+                <div class="row">
+                    <span>${act}</span>
+                    <label class="switch">
+                        <input type="checkbox" ${state ? "checked" : ""}
+                        onchange="toggle('${roomName}','${act}', this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>`;
+            }
+        }
+
+        card.innerHTML = html;
+        grid.appendChild(card);
+    }
+}
+
+function toggle(room, actuator, state) {
+    fetch(`/toggle/${room}/${actuator}/${state}`);
+}
+
+
+
 // ===== TOGGLES =====
 
 let updating = {
@@ -166,6 +231,16 @@ async function sendToggle(url, key) {
         updating[key] = false;
     }, 500);
 }
+
+async function refreshData() {
+    const res = await fetch("/api/data");
+    homeStructure = await res.json();
+}
+
+setInterval(async () => {
+    await refreshData();
+    renderUI();
+}, 1000);
 
 
 // ===== TOGGLES =====
@@ -254,7 +329,7 @@ function initCharts() {
 // ===== LIVE UPDATE =====
 
 
-async function refreshData() {
+/*async function refreshData() {
 
     const res = await fetch("/api/data")
     const data = await res.json()
@@ -321,7 +396,7 @@ async function refreshData() {
             data.Chambre_2.Actionneurs.Chauffage.etat
     }
 }
-
+*/
 
 async function loadHistory(chartKey, room, sensor, metric) {
 
@@ -353,11 +428,11 @@ function loadAllHistory() {
 
 initCharts();
 
-setInterval(refreshData, 1000);
+/*setInterval(refreshData, 1000);
 setInterval(loadAllHistory, 60000);
 
 refreshData();
-loadAllHistory();
+loadAllHistory();*/
 
 </script>
 

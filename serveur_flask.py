@@ -9,14 +9,10 @@ app.secret_key = get_firebase_config()["secret_key"]
 @app.route("/api/data")
 def api_data():
 
-    data = get_data("SmartHome")
+    user_id = session.get("user_id")
+    home_id = get_user_home(user_id)
 
-    # ATTENTION
-    if data["Garage"]["Capteurs"]["Ultrason"]["distance"] <= data["Garage"]["Actionneurs"]["LedStationnement"]["distance_activation"]:
-        update_data("SmartHome/Garage/Actionneurs/LedStationnement", {"etat": True})
-    else:
-        update_data("SmartHome/Garage/Actionneurs/LedStationnement", {"etat": False})
-    #A RETIRER UNE FOIS LA LED ARDUINO CORRECTEMENT SETUP
+    data = get_data(f"Homes/{home_id}")
 
     return jsonify(data)
 
@@ -29,7 +25,8 @@ def home():
     if "user" not in session:
         return redirect("/login")
     
-    data = get_data("SmartHome")
+
+    data = get_data(f"Homes/{session["home_id"]}")
     return render_template("index.html", data=data)
 
 # ROUTES
@@ -130,7 +127,7 @@ def disarm():
 @app.route("/api/history/<room>/<sensor>/<metric>")
 def history(room, sensor, metric):
 
-    path = f"SmartHome/{room}/Capteurs/{sensor}/Historique/{metric}"
+    path = f"Homes/{session["home_id"]}/{room}/Capteurs/{sensor}/Historique/{metric}"
     data = get_data(path)
 
     if not data:
@@ -147,6 +144,18 @@ def history(room, sensor, metric):
 
     return jsonify(result)
 
+@app.route("/toggle/<room>/<actuator>/<state>")
+def toggle(room, actuator, state):
+
+    user_id = session.get("user_id")
+    home_id = get_user_home(user_id)
+
+    path = f"Homes/{home_id}/{room}/Actionneurs/{actuator}/etat"
+
+    update_data(path, state == "true")
+
+    return "ok"
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -159,6 +168,8 @@ def login():
 
         if user:
             session["user"] = email
+            session["user_id"] = user["localId"]
+            session["home_id"] = get_user_home(session["user_id"])
             return redirect("/")
 
         return "Erreur connexion"
