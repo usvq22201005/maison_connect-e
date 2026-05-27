@@ -1,4 +1,5 @@
 firebase.json
 firebase_auth.json
+vip_club.py
 .venv/
 __pycache__/
