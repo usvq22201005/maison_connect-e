@@ -9,6 +9,7 @@ body {
     color: #e5e7eb;
 }
 
+
 /* =======================
    HEADER DASHBOARD
 ======================= */
@@ -166,6 +167,116 @@ button {
     transition: 0.2s;
 }
 
+/* =======================
+   TOGGLE AUTO (like switch)
+======================= */
+
+.auto-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.auto-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.auto-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #374151;
+  border-radius: 20px;
+  transition: .3s;
+}
+
+.auto-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: .3s;
+}
+
+.auto-switch input:checked + .auto-slider {
+  background-color: #3b82f6;
+}
+
+.auto-switch input:checked + .auto-slider:before {
+  transform: translateX(20px);
+}
+
+/* =======================
+   SEUIL INPUT CLEAN
+======================= */
+
+.seuil-container {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.seuil-container span {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  line-height: 32px;
+  font-size: 14px;
+  color: #e5e7eb;
+}
+
+.seuil-input {
+  width: 70px;
+  height: 32px;
+  padding: 0;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #0b1220;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 32px;
+  box-sizing: border-box;
+}
+
+/* hide default arrows */
+.seuil-input::-webkit-outer-spin-button,
+.seuil-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* + - buttons */
+.step-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #374151;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.step-btn:hover {
+  background: #4b5563;
+}
+
 button:hover {
     background: #3b82f6;
     transform: scale(1.02);
@@ -182,4 +293,243 @@ a {
 
 a:hover {
     color: white;
+}
+
+
+/* ALARME */
+
+#global_alarm {
+        display:none;
+        width:100%;
+        background:#dc2626;
+        color:white;
+        font-size:28px;
+        font-weight:bold;
+        text-align:center;
+        padding:20px;
+        box-sizing:border-box;
+        margin-top:40px;
+        animation: blinkAlarm 1s infinite;
+}
+
+@keyframes blinkAlarm {
+
+    0% {
+        background: #dc2626;
+    }
+
+    50% {
+        background: #991b1b;
+    }
+
+    100% {
+        background: #dc2626;
+    }
+}
+
+/* =======================
+   ALERTES / ERREURS
+======================= */
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid #ef4444;
+    color: #fecaca;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid #22c55e;
+    color: #bbf7d0;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+/* =======================
+   WAITING ACCESS PAGE
+======================= */
+
+.waiting-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.waiting-card {
+    background: #111827;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 700px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.waiting-card h1 {
+    color: #60a5fa;
+    margin-bottom: 10px;
+}
+
+.waiting-subtitle {
+    color: #9ca3af;
+    margin-bottom: 30px;
+}
+
+.promo-box {
+    margin-top: 30px;
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.promo-box ul {
+    margin-top: 15px;
+    padding-left: 20px;
+}
+
+.promo-box li {
+    margin-bottom: 10px;
+}
+
+.contact-box {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.contact-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 12px 20px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.contact-btn:hover {
+    background: #2563eb;
+}
+
+/* =======================
+   RESPONSIVE MOBILE
+======================= */
+
+@media (max-width: 768px) {
+
+    body {
+        font-size: 16px;
+    }
+
+    .header {
+        font-size: 20px;
+        padding: 16px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr; /* 1 colonne sur mobile */
+        padding: 10px;
+        gap: 12px;
+    }
+
+    .card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .value {
+        font-size: 16px;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    /* switches plus grands sur mobile */
+    .switch, .auto-switch {
+        transform: scale(1.1);
+    }
+
+    .seuil-container {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .seuil-input {
+        width: 90px;
+    }
+
+    .step-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .auth-card {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .auth-title {
+        font-size: 22px;
+    }
+
+    input, button {
+        font-size: 16px;
+        padding: 14px;
+    }
+
+    .waiting-card {
+        padding: 20px;
+    }
+
+    .waiting-card h1 {
+        font-size: 22px;
+    }
+
+    .promo-box, .contact-box {
+        padding: 16px;
+    }
+
+    .contact-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+  .seuil-container {
+    flex-wrap: nowrap;       /* empêche le retour à la ligne */
+    gap: 6px;
+    overflow-x: auto;        /* si ça déborde, scroll horizontal discret */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .seuil-container span {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .seuil-input {
+    width: 55px;            /* réduit la largeur */
+    font-size: 12px;
+  }
+
+  .step-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  canvas {
+    height: 280px !important; /* plus lisible sur téléphone */
+  }
 }

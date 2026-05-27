@@ -1,22 +1,20 @@
 from flask import Flask, render_template, jsonify, request, redirect, session
 import time
 from firebase_control import *
+from vip_club import VIP_CLUB
 
 app = Flask(__name__)
 
 app.secret_key = get_firebase_config()["secret_key"]
+login_attempts = {}
+
+def is_authorized(email):
+    return email in VIP_CLUB
 
 @app.route("/api/data")
 def api_data():
 
     data = get_data("SmartHome")
-
-    # ATTENTION
-    if data["Garage"]["Capteurs"]["Ultrason"]["distance"] <= data["Garage"]["Actionneurs"]["LedStationnement"]["distance_activation"]:
-        update_data("SmartHome/Garage/Actionneurs/LedStationnement", {"etat": True})
-    else:
-        update_data("SmartHome/Garage/Actionneurs/LedStationnement", {"etat": False})
-    #A RETIRER UNE FOIS LA LED ARDUINO CORRECTEMENT SETUP
 
     return jsonify(data)
 
@@ -28,9 +26,25 @@ def home():
 
     if "user" not in session:
         return redirect("/login")
-    
-    data = get_data("SmartHome")
-    return render_template("index.html", data=data)
+
+    email = session["user"]
+
+    # Utilisateur autorisé
+    if is_authorized(email):
+
+        data = get_data("SmartHome")
+
+        return render_template(
+            "index.html",
+            data=data,
+            email=email
+        )
+
+    # Utilisateur NON autorisé
+    return render_template(
+        "waiting_access.html",
+        email=email
+    )
 
 # ROUTES
 
@@ -122,7 +136,46 @@ def arm():
 @app.route("/disarm")
 def disarm():
     #send_command(b'a')
-    update_data("SmartHome/Salon/Actionneurs/Alarme", {"etat": False})
+    update_data("SmartHome/Salon/Actionneurs/Alarme", {"etat": False, "alerte": False})
+    return "OK"
+
+@app.route("/set_chauffage_seuil/<value>")
+def set_chauffage_seuil(value):
+    update_data("SmartHome/Chambre_1/Actionneurs/Chauffage", {
+        "seuil": float(value)
+    })
+    return "OK"
+
+@app.route("/toggle_chauffage_auto/<state>")
+def toggle_chauffage_auto(state):
+
+    update_data("SmartHome/Chambre_1/Actionneurs/Chauffage", {
+        "mode_auto": state == "1"
+    })
+    return "OK"
+
+@app.route("/set_ventilateur_seuil/<value>")
+def set_ventilateur_seuil(value):
+    update_data("SmartHome/Chambre_1/Actionneurs/Ventilateur", {
+        "seuil": float(value)
+    })
+    return "OK"
+
+@app.route("/toggle_ventilateur_auto/<state>")
+def toggle_ventilateur_auto(state):
+
+    update_data("SmartHome/Chambre_1/Actionneurs/Ventilateur", {
+        "mode_auto": state == "1"
+    })
+    return "OK"
+
+@app.route("/set_garage_seuil/<value>")
+def set_garage_seuil(value):
+
+    update_data("SmartHome/Garage/Actionneurs/LedStationnement", {
+        "distance_activation": int(value)
+    })
+
     return "OK"
 
 
@@ -150,38 +203,127 @@ def history(room, sensor, metric):
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
+    error = None
+
     if request.method == "POST":
 
         email = request.form["email"]
         password = request.form["password"]
 
+        now = time.time()
+
+        # Création entrée si absente
+        if email not in login_attempts:
+            login_attempts[email] = {
+                "count": 0,
+                "blocked_until": 0
+            }
+
+        user_attempt = login_attempts[email]
+
+        # Vérifie si bloqué
+        if now < user_attempt["blocked_until"]:
+
+            remaining = int(user_attempt["blocked_until"] - now)
+
+            error = (
+                f"Trop de tentatives. "
+                f"Réessayez dans {remaining} secondes."
+            )
+
+            return render_template(
+                "login.html",
+                error=error
+            )
+
         user = login_user(email, password)
 
         if user:
+
+            # Reset compteur
+            login_attempts[email] = {
+                "count": 0,
+                "blocked_until": 0
+            }
+
             session["user"] = email
             return redirect("/")
 
-        return "Erreur connexion"
+        # Mauvais login
+        user_attempt["count"] += 1
 
-    return render_template("login.html")
+        # Blocage après 5 essais
+        if user_attempt["count"] >= 5:
+
+            user_attempt["blocked_until"] = now + 30
+
+            error = (
+                "Trop de tentatives échouées. "
+                "Compte bloqué 30 secondes."
+            )
+
+        else:
+
+            remaining = 5 - user_attempt["count"]
+
+            error = (
+                f"Email ou mot de passe incorrect. "
+                f"Essais restants : {remaining}"
+            )
+
+    return render_template(
+        "login.html",
+        error=error
+    )
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
+    error = None
+    success = None
+
     if request.method == "POST":
 
         email = request.form["email"]
         password = request.form["password"]
 
+        # Vérification mot de passe minimal
+        if len(password) < 6:
+
+            error = (
+                "Le mot de passe doit contenir "
+                "au moins 6 caractères."
+            )
+
+            return render_template(
+                "register.html",
+                error=error
+            )
+
         user = register_user(email, password)
 
         if user:
-            return redirect("/login")
 
-        return "Erreur inscription"
+            success = (
+                "Compte créé avec succès. "
+                "Vous pouvez maintenant vous connecter."
+            )
 
-    return render_template("register.html")
+            return render_template(
+                "register.html",
+                success=success
+            )
+
+        error = (
+            "Cette adresse email est déjà utilisée."
+        )
+
+    return render_template(
+        "register.html",
+        error=error,
+        success=success
+    )
 
 
 @app.route("/logout")

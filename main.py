@@ -2,7 +2,7 @@ import threading
 
 from serveur_flask import run_flask
 from historique import run_historique
-from arduino import run_raspberry
+from arduino import comm_arduino
 
 
 # =========================
@@ -21,7 +21,7 @@ history_thread = threading.Thread(target=run_historique)
 # THREAD RASPBERRY
 # =========================
 
-raspberry_thread = threading.Thread(target=run_raspberry)
+arduino_thread = threading.Thread(target=comm_arduino)
 
 # =========================
 # DAEMON
@@ -29,7 +29,7 @@ raspberry_thread = threading.Thread(target=run_raspberry)
 
 flask_thread.daemon = True
 history_thread.daemon = True
-raspberry_thread.daemon = True
+arduino_thread.daemon = True
 
 # =========================
 # START
@@ -37,7 +37,7 @@ raspberry_thread.daemon = True
 
 flask_thread.start()
 history_thread.start()
-raspberry_thread.start()
+arduino_thread.start()
 
 # =========================
 # KEEP ALIVE
@@ -45,4 +45,4 @@ raspberry_thread.start()
 
 flask_thread.join()
 history_thread.join()
-raspberry_thread.join()
+arduino_thread.join()

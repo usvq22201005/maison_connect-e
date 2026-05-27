@@ -84,16 +84,27 @@ def run_historique():
         # CHAMBRE 2
         # =========================
 
-        ch2_sound = data["Chambre_2"]["Capteurs"]["NiveauSonore"]["niveau"]
+        #ch2_sound = data["Chambre_2"]["Capteurs"]["NiveauSonore"]["niveau"]
 
-        push_history(
-            "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/niveau",
-            ch2_sound
-        )
+        #push_history(
+        #    "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/niveau",
+        #    ch2_sound
+        #)
 
-        cleanup_24h(
-            "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/niveau"
-        )
+        #cleanup_24h(
+        #    "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/niveau"
+        #)
+
+        #ch2_clap = data["Chambre_2"]["Capteurs"]["NiveauSonore"]["niveau"]
+
+        #push_history(
+        #    "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/clap",
+        #    ch2_clap
+        #)
+
+        #cleanup_24h(
+        #    "SmartHome/Chambre_2/Capteurs/NiveauSonore/Historique/clap"
+        #)
 
 
 

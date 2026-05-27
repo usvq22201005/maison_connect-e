@@ -3,6 +3,7 @@
 <head>
     <title>Register</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body class="auth-body">
 
@@ -10,12 +11,33 @@
 
     <div class="auth-title">🧾 Inscription</div>
 
+    {% if error %}
+        <div class="alert-error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    {% if success %}
+        <div class="alert-success">
+            {{ success }}
+        </div>
+    {% endif %}
+
     <form method="POST">
 
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Mot de passe" required>
+        <input type="email"
+               name="email"
+               placeholder="Email"
+               required>
 
-        <button type="submit">Créer le compte</button>
+        <input type="password"
+               name="password"
+               placeholder="Mot de passe"
+               required>
+
+        <button type="submit">
+            Créer le compte
+        </button>
 
     </form>
 

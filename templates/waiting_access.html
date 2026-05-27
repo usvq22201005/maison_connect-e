@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Smart Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="header">
+    🏠 Smart Home Dashboard
+
+    <button onclick="window.location.href='/logout'"
+            style="float:right; background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:8px;">
+        Déconnexion
+    </button>
+</div>
+
+<div class="waiting-container">
+
+    <div class="waiting-card">
+
+        <h1>
+            🚀 Smart Home Premium
+        </h1>
+
+        <p class="waiting-subtitle">
+            Bonjour {{ email }}
+        </p>
+
+        <p>
+            Votre compte a bien été créé,
+            mais cet espace est réservé aux clients Smart Home.
+        </p>
+
+        <div class="promo-box">
+
+            <h2>
+                🏡 Une maison intelligente sur mesure
+            </h2>
+
+            <ul>
+                <li>💡 Éclairage intelligent</li>
+                <li>🌡 Chauffage automatisé</li>
+                <li>📱 Application dédiée</li>
+                <li>🔒 Sécurité & alarmes</li>
+                <li>📊 Historique temps réel</li>
+                <li>⚙️ Installation personnalisée</li>
+            </ul>
+
+        </div>
+
+        <div class="contact-box">
+
+            <h3>
+                📞 Devenir client
+            </h3>
+
+            <p>
+                Contactez-nous pour faire installer
+                votre Smart Home personnalisée.
+            </p>
+
+            <a class="contact-btn"
+               href="mailto:contact@smarthome.fr">
+                Nous contacter
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

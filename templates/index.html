@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
@@ -17,7 +18,21 @@
     </button>
 </div>
 
-
+<div id="global_alarm"
+     style="
+        display:none;
+        width:100%;
+        background:#dc2626;
+        color:white;
+        font-size:28px;
+        font-weight:bold;
+        text-align:center;
+        padding:20px;
+        box-sizing:border-box;
+        animation: blinkAlarm 1s infinite;
+     ">
+    🚨 ALARME ACTIVÉE — INTRUSION DÉTECTÉE 🚨
+</div>
 
 <div class="grid">
 
@@ -77,11 +92,55 @@
     </div>
 
     <div class="row">
+        <span>🤖 Chauffage automatique</span>
+        <label class="auto-switch">
+            <input id="toggle_auto_heat" type="checkbox" onchange="toggleAutoChauffage(this.checked)">
+            <span class="auto-slider"></span>
+        </label>
+    </div>
+
+    <div class="row">
+        <div class="seuil-container" id="heat_seuil_box" style="display:none;">
+            <span>🌡 Seuil de chauffage</span>
+            <button class="step-btn" onclick="changeHeatSeuil(-1)">-</button>
+
+            <input class="seuil-input"
+                id="seuil_heat"
+                type="number"
+                onchange="setHeatSeuil(this.value)">
+
+            <button class="step-btn" onclick="changeHeatSeuil(1)">+</button>
+        </div>
+    </div>
+
+    <div class="row">
         <span>⚡ Ventilateur</span>
         <label class="switch">
             <input id="toggle_relay" type="checkbox" onchange="toggleRelay(this.checked)">
             <span class="slider"></span>
         </label>
+    </div>
+
+    <div class="row">
+        <span>🤖 Ventilation automatique</span>
+        <label class="auto-switch">
+            <input id="toggle_auto_vent" type="checkbox" onchange="toggleAutoVentilateur(this.checked)">
+            <span class="auto-slider"></span>
+        </label>
+    </div>
+
+    <div class="row">
+        <div class="seuil-container" id="vent_seuil_box" style="display:none;">
+            <span>🌡 Seuil de ventilation</span>
+            <button class="step-btn" onclick="changeVentSeuil(-1)">-</button>
+
+            <input class="seuil-input"
+                id="seuil_ventilateur"
+                type="number"
+                onchange="setVentilateurSeuil(this.value)">
+
+            <button class="step-btn" onclick="changeVentSeuil(1)">+</button>
+        </div>
     </div>
 
 
@@ -122,6 +181,21 @@
 
     <div class="value">📏 Distance: <span id="garage_distance">{{ data.Garage.Capteurs.Ultrason.distance }}</span> cm</div>
 
+    <div class="row">
+        <div class="seuil-container">
+            <span>📏 Seuil garage</span>
+            <button class="step-btn" onclick="changeGarageSeuil(-5)">-</button>
+
+            <input class="seuil-input"
+                id="seuil_garage"
+                type="number"
+                value="{{ data.Garage.Actionneurs.LedStationnement.distance_activation | default(30) }}"
+                oninput="setGarageSeuil(this.value)">
+
+            <button class="step-btn" onclick="changeGarageSeuil(5)">+</button>
+        </div>
+    </div>
+
     <div class="value">
         État:
         <span id="garage_etat"
@@ -138,90 +212,134 @@
 
 <script>
 
-// ===== TOGGLES =====
-
-let updating = {
-    salon: false,
-    alarm: false,
-    led1: false,
-    heat1: false,
-    relay1: false,
-    led2: false,
-    heat2: false
+// ===== VERROUS DE SYNCHRONISATION =====
+// Contient le timestamp jusqu'auquel on bloque la mise à jour automatique pour chaque élément
+let locks = {
+    salon: 0,
+    alarm: 0,
+    led1: 0,
+    heat1: 0,
+    relay1: 0,
+    led2: 0,
+    heat2: 0,
+    auto_heat: 0,
+    auto_vent: 0,
+    seuil_heat: 0,
+    seuil_vent: 0,
+    seuil_garage: 0
 };
 
-async function sendToggle(url, key) {
-
-    updating[key] = true;
-
-    try {
-        await fetch(url);
-    }
-    catch(e) {
-        console.log(e);
-    }
-
-    // petit délai pour laisser Firebase se synchroniser
-    setTimeout(() => {
-        updating[key] = false;
-    }, 500);
+// Fonction utilitaire pour poser un verrou de 2 secondes lors d'une action de l'utilisateur
+function acquireLock(key) {
+    locks[key] = Date.now() + 2000; // Bloque pendant 2000ms (2 secondes)
 }
 
+function isLocked(key) {
+    return Date.now() < locks[key];
+}
 
-// ===== TOGGLES =====
+// ===== ENVOI DES COMMANDES (FETCH) =====
+async function sendAction(url, lockKey) {
+    acquireLock(lockKey);
+    try {
+        await fetch(url);
+    } catch(e) {
+        console.error("Erreur lors de l'action :", e);
+    }
+}
+
+// ===== REQUÊTES DES TOGGLES & INPUTS =====
 
 function toggleSalon(state) {
-    sendToggle(
-        state ? "/salon_on" : "/salon_off",
-        "salon"
-    );
+    sendAction(state ? "/salon_on" : "/salon_off", "salon");
 }
 
 function toggleAlarm(state) {
-    sendToggle(
-        state ? "/arm" : "/disarm",
-        "alarm"
-    );
+    sendAction(state ? "/arm" : "/disarm", "alarm");
 }
 
 function toggleLed(state) {
-    sendToggle(
-        state ? "/led_on" : "/led_off",
-        "led1"
-    );
+    sendAction(state ? "/led_on" : "/led_off", "led1");
 }
 
 function toggleHeat(state) {
-    sendToggle(
-        state ? "/heat_on" : "/heat_off",
-        "heat1"
-    );
+    // Désactive le mode auto côté Firebase et UI immédiatement
+    sendAction("/toggle_chauffage_auto/0", "auto_heat");
+    document.getElementById("toggle_auto_heat").checked = false;
+    toggleHeatAutoUI(false);
+    
+    // Change l'état du chauffage
+    sendAction(state ? "/heat_on" : "/heat_off", "heat1");
 }
 
 function toggleRelay(state) {
-    sendToggle(
-        state ? "/relay_on" : "/relay_off",
-        "relay1"
-    );
+    // Désactive la ventilation auto côté Firebase et UI immédiatement
+    sendAction("/toggle_ventilateur_auto/0", "auto_vent");
+    document.getElementById("toggle_auto_vent").checked = false;
+    toggleVentAutoUI(false);
+    
+    // Change l'état du ventilateur
+    sendAction(state ? "/relay_on" : "/relay_off", "relay1");
 }
 
 function toggleLed2(state) {
-    sendToggle(
-        state ? "/led2_on" : "/led2_off",
-        "led2"
-    );
+    sendAction(state ? "/led2_on" : "/led2_off", "led2");
 }
 
 function toggleHeat2(state) {
-    sendToggle(
-        state ? "/heat2_on" : "/heat2_off",
-        "heat2"
-    );
+    sendAction(state ? "/heat2_on" : "/heat2_off", "heat2");
+}
+
+function toggleAutoChauffage(state) {
+    sendAction(state ? "/toggle_chauffage_auto/1" : "/toggle_chauffage_auto/0", "auto_heat");
+    toggleHeatAutoUI(state);
+}
+
+function setHeatSeuil(val) {
+    sendAction("/set_chauffage_seuil/" + val, "seuil_heat");
+}
+
+function changeHeatSeuil(delta) {
+    const input = document.getElementById("seuil_heat");
+    input.value = parseInt(input.value || 0) + delta;
+    setHeatSeuil(input.value);
+}
+
+function toggleHeatAutoUI(state) {
+    document.getElementById("heat_seuil_box").style.display = state ? "flex" : "none";
+}
+
+function toggleAutoVentilateur(state) {
+    sendAction(state ? "/toggle_ventilateur_auto/1" : "/toggle_ventilateur_auto/0", "auto_vent");
+    toggleVentAutoUI(state);
+}
+
+function setVentilateurSeuil(val) {
+    sendAction("/set_ventilateur_seuil/" + val, "seuil_vent");
+}
+
+function changeVentSeuil(delta) {
+    const input = document.getElementById("seuil_ventilateur");
+    input.value = parseInt(input.value || 0) + delta;
+    setVentilateurSeuil(input.value);
+}
+
+function toggleVentAutoUI(state) {
+    document.getElementById("vent_seuil_box").style.display = state ? "flex" : "none";
+}
+
+function setGarageSeuil(val) {
+    sendAction("/set_garage_seuil/" + val, "seuil_garage");
+}
+
+function changeGarageSeuil(delta) {
+    const input = document.getElementById("seuil_garage");
+    input.value = parseInt(input.value || 0) + delta;
+    setGarageSeuil(input.value);
 }
 
 
-/* ================= CHARTS ================= */
-
+/* ================= CHARTS (INCHANGÉ) ================= */
 const charts = {};
 
 function createChart(id, label, color) {
@@ -229,133 +347,141 @@ function createChart(id, label, color) {
         type: "line",
         data: {
             labels: [],
-            datasets: [{
-                label: label,
-                data: [],
-                borderColor: color
-            }]
+            datasets: [{ label: label, data: [], borderColor: color }]
         }
     });
 }
 
 function initCharts() {
-
     charts.salon_temp = createChart("chart_salon_temp", "Temp Salon", "#60a5fa");
     charts.salon_hum = createChart("chart_salon_hum", "Hum Salon", "#22c55e");
-
     charts.ch1_temp = createChart("chart_ch1_temp", "Temp Chambre 1", "#60a5fa");
     charts.ch1_hum = createChart("chart_ch1_hum", "Hum Chambre 1", "#22c55e");
-
-    charts.ch2_sound = createChart("chart_ch2_sound", "Son", "#f59e0b");
-
+    charts.ch2_sound = new Chart(document.getElementById("chart_ch2_sound"), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Clap (1 = détecté, 0 = non)",
+                data: [],
+                borderColor: "#f59e0b",
+                stepped: true, // Donne un effet de marche d'escalier propre pour du binaire
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    min: 0,
+                    max: 1,
+                    ticks: {
+                        stepSize: 1 // Force l'affichage de 0 et 1 uniquement
+                    }
+                }
+            }
+        }
+    });
     charts.garage_dist = createChart("chart_garage_dist", "Distance", "#a78bfa");
 }
 
-// ===== LIVE UPDATE =====
-
-
+// ===== LIVE UPDATE AVEC PROTECTION CONTRE ROLLBACK =====
 async function refreshData() {
+    try {
+        const res = await fetch("/api/data");
+        const data = await res.json();
 
-    const res = await fetch("/api/data")
-    const data = await res.json()
+        // Données des capteurs (Toujours mises à jour, pas de verrou dessus)
+        document.getElementById("temp_salon").innerText = data.Salon.Capteurs.DHT11.temperature;
+        document.getElementById("hum_salon").innerText = data.Salon.Capteurs.DHT11.humidite;
+        document.getElementById("temp_chambre1").innerText = data.Chambre_1.Capteurs.DHT22.temperature;
+        document.getElementById("hum_chambre1").innerText = data.Chambre_1.Capteurs.DHT22.humidite;
+        document.getElementById("son_chambre2").innerText = data.Chambre_2.Capteurs.NiveauSonore.niveau;
 
-    // salon
-    document.getElementById("temp_salon").innerText = data.Salon.Capteurs.DHT11.temperature
-    document.getElementById("hum_salon").innerText = data.Salon.Capteurs.DHT11.humidite
+        const d = data.Garage.Capteurs.Ultrason.distance;
+        const s = data.Garage.Actionneurs.LedStationnement.distance_activation;
+        document.getElementById("garage_distance").innerText = d;
 
-    // chambre 1
-    document.getElementById("temp_chambre1").innerText = data.Chambre_1.Capteurs.DHT22.temperature
-    document.getElementById("hum_chambre1").innerText = data.Chambre_1.Capteurs.DHT22.humidite
+        const etat = document.getElementById("garage_etat");
+        if (d <= s) {
+            etat.innerText = "occupé";
+            etat.className = "bad";
+        } else {
+            etat.innerText = "libre";
+            etat.className = "ok";
+        }
 
-    // chambre 2
-    document.getElementById("son_chambre2").innerText = data.Chambre_2.Capteurs.NiveauSonore.niveau
+        const globalAlarm = document.getElementById("global_alarm");
+        globalAlarm.style.display = data.Salon.Actionneurs.Alarme.alerte ? "block" : "none";
 
-    // garage
-    const d = data.Garage.Capteurs.Ultrason.distance
-    const s = data.Garage.Actionneurs.LedStationnement.distance_activation
-
-    document.getElementById("garage_distance").innerText = d
-
-    const etat = document.getElementById("garage_etat")
-
-    if (d <= s) {
-        etat.innerText = "occupé"
-        etat.className = "bad"
-    } else {
-        etat.innerText = "libre"
-        etat.className = "ok"
-    }
-
-    if (!updating.salon) {
-        document.getElementById("toggle_salon").checked =
-            data.Salon.Actionneurs.Eclairage.etat
-    }
-
-    if (!updating.alarm) {
-        document.getElementById("toggle_alarm").checked =
-            data.Salon.Actionneurs.Alarme.etat
-    }
-
-    if (!updating.led1) {
-        document.getElementById("toggle_led").checked =
-            data.Chambre_1.Actionneurs.Eclairage.etat
-    }
-
-    if (!updating.heat1) {
-        document.getElementById("toggle_heat").checked =
-            data.Chambre_1.Actionneurs.Chauffage.etat
-    }
-
-    if (!updating.relay1) {
-        document.getElementById("toggle_relay").checked =
-            data.Chambre_1.Actionneurs.Ventilateur.etat
-    }
-
-    if (!updating.led2) {
-        document.getElementById("toggle_led2").checked =
-            data.Chambre_2.Actionneurs.Eclairage.etat
-    }
-
-    if (!updating.heat2) {
-        document.getElementById("toggle_heat2").checked =
-            data.Chambre_2.Actionneurs.Chauffage.etat
+        // --- Application des données Firebase UNIQUEMENT si l'élément n'est pas verrouillé par l'utilisateur ---
+        if (!isLocked("salon")) {
+            document.getElementById("toggle_salon").checked = data.Salon.Actionneurs.Eclairage.etat;
+        }
+        if (!isLocked("alarm")) {
+            document.getElementById("toggle_alarm").checked = data.Salon.Actionneurs.Alarme.etat;
+        }
+        if (!isLocked("led1")) {
+            document.getElementById("toggle_led").checked = data.Chambre_1.Actionneurs.Eclairage.etat;
+        }
+        if (!isLocked("heat1")) {
+            document.getElementById("toggle_heat").checked = data.Chambre_1.Actionneurs.Chauffage.etat;
+        }
+        if (!isLocked("auto_heat")) {
+            const modeAutoHeat = data.Chambre_1.Actionneurs.Chauffage.mode_auto;
+            document.getElementById("toggle_auto_heat").checked = modeAutoHeat;
+            toggleHeatAutoUI(modeAutoHeat);
+        }
+        if (!isLocked("seuil_heat")) {
+            document.getElementById("seuil_heat").value = data.Chambre_1.Actionneurs.Chauffage.seuil ?? 20;
+        }
+        if (!isLocked("relay1")) {
+            document.getElementById("toggle_relay").checked = data.Chambre_1.Actionneurs.Ventilateur.etat;
+        }
+        if (!isLocked("auto_vent")) {
+            const modeAutoVent = data.Chambre_1.Actionneurs.Ventilateur.mode_auto;
+            document.getElementById("toggle_auto_vent").checked = modeAutoVent;
+            toggleVentAutoUI(modeAutoVent);
+        }
+        if (!isLocked("seuil_vent")) {
+            document.getElementById("seuil_ventilateur").value = data.Chambre_1.Actionneurs.Ventilateur.seuil ?? 25;
+        }
+        if (!isLocked("led2")) {
+            document.getElementById("toggle_led2").checked = data.Chambre_2.Actionneurs.Eclairage.etat;
+        }
+        if (!isLocked("heat2")) {
+            document.getElementById("toggle_heat2").checked = data.Chambre_2.Actionneurs.Chauffage.etat;
+        }
+        if (!isLocked("seuil_garage")) {
+            document.getElementById("seuil_garage").value = data.Garage.Actionneurs.LedStationnement.distance_activation ?? 30;
+        }
+    } catch (e) {
+        console.error("Erreur refreshData:", e);
     }
 }
 
-
 async function loadHistory(chartKey, room, sensor, metric) {
-
-    const res = await fetch(`/api/history/${room}/${sensor}/${metric}`);
-    const data = await res.json();
-
-    charts[chartKey].data.labels = data.map(p =>
-        new Date(p.x * 1000).toLocaleTimeString()
-    );
-
-    charts[chartKey].data.datasets[0].data = data.map(p => p.y);
-
-    charts[chartKey].update();
+    try {
+        const res = await fetch(`/api/history/${room}/${sensor}/${metric}`);
+        const data = await res.json();
+        charts[chartKey].data.labels = data.map(p => new Date(p.x * 1000).toLocaleTimeString());
+        charts[chartKey].data.datasets[0].data = data.map(p => p.y);
+        charts[chartKey].update();
+    } catch(e) { console.log(e); }
 }
 
 function loadAllHistory() {
-
     loadHistory("salon_temp", "Salon", "DHT11", "temperature");
     loadHistory("salon_hum", "Salon", "DHT11", "humidite");
-
     loadHistory("ch1_temp", "Chambre_1", "DHT22", "temperature");
     loadHistory("ch1_hum", "Chambre_1", "DHT22", "humidite");
-
-    loadHistory("ch2_sound", "Chambre_2", "NiveauSonore", "niveau");
-
+    loadHistory("ch2_sound", "Chambre_2", "NiveauSonore", "clap");
     loadHistory("garage_dist", "Garage", "Ultrason", "distance");
 }
 
-
+// Initialisation
 initCharts();
-
 setInterval(refreshData, 1000);
 setInterval(loadAllHistory, 60000);
-
 refreshData();
 loadAllHistory();
 
